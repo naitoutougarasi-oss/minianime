@@ -6,7 +6,6 @@
   <title>Simple Animation Studio</title>
   <style>
     :root {
-      --bg: #f6f7fb;
       --panel: #ffffff;
       --line: #d8dce7;
       --text: #1d2433;
@@ -29,7 +28,7 @@
 
     .app {
       display: grid;
-      grid-template-columns: minmax(560px, 1.6fr) minmax(360px, 1fr);
+      grid-template-columns: minmax(560px, 1.7fr) minmax(360px, 1fr);
       gap: 18px;
       min-height: 100vh;
       padding: 18px;
@@ -47,9 +46,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
       padding: 16px 18px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.82);
       backdrop-filter: blur(10px);
     }
 
@@ -67,13 +67,15 @@
       margin-top: 4px;
     }
 
-    .left {
+    .left,
+    .right {
       display: flex;
       flex-direction: column;
       min-height: calc(100vh - 36px);
     }
 
-    .toolbar {
+    .toolbar,
+    .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
@@ -82,7 +84,13 @@
       background: #fbfcff;
     }
 
-    .tool-group {
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    .tool-group,
+    .control-group {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -90,17 +98,26 @@
       background: #fff;
       border: 1px solid var(--line);
       border-radius: 999px;
+      min-height: 54px;
+      flex-wrap: wrap;
     }
 
-    .tool-group label {
+    .tool-group label,
+    .control-group label,
+    .check-label {
       font-size: 13px;
       color: var(--muted);
       white-space: nowrap;
     }
 
-    .tool-buttons {
+    .tool-buttons,
+    .action-row,
+    .frame-actions,
+    .playback-actions,
+    .io-actions {
       display: inline-flex;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     button {
@@ -148,6 +165,24 @@
       accent-color: var(--accent);
     }
 
+    .slider-row {
+      display: grid;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
     .canvas-wrap {
       flex: 1;
       display: grid;
@@ -159,21 +194,36 @@
         linear-gradient(45deg, transparent 75%, #eef1f8 75%),
         linear-gradient(-45deg, transparent 75%, #eef1f8 75%);
       background-size: 28px 28px;
-      background-position: 0 0, 0 14px, 14px -14px, -14px 0px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
     }
 
     .canvas-shell {
-      background: white;
+      background: #fff;
       border: 1px solid var(--line);
       border-radius: 20px;
       padding: 14px;
       box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .canvas-note {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      z-index: 3;
+      background: rgba(255,255,255,0.92);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      pointer-events: none;
     }
 
     canvas {
       display: block;
       border-radius: 14px;
-      background: white;
+      background: #fff;
       touch-action: none;
       image-rendering: pixelated;
     }
@@ -182,45 +232,23 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
       padding: 12px 18px;
       border-top: 1px solid var(--line);
       background: #fbfcff;
       font-size: 13px;
       color: var(--muted);
-    }
-
-    .right {
-      display: flex;
-      flex-direction: column;
-      min-height: calc(100vh - 36px);
-    }
-
-    .controls {
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line);
-      display: grid;
-      gap: 14px;
-    }
-
-    .slider-row {
-      display: grid;
-      gap: 6px;
-    }
-
-    .slider-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .frame-actions,
-    .playback-actions,
-    .io-actions {
-      display: flex;
       flex-wrap: wrap;
+    }
+
+    .info-chip {
+      display: inline-flex;
+      align-items: center;
       gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #fff;
     }
 
     .frames {
@@ -257,6 +285,15 @@
       background: #fdfefe;
     }
 
+    .frame-card.dragging {
+      opacity: 0.45;
+    }
+
+    .frame-card.drop-target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
     .thumb {
       width: 96px;
       height: 96px;
@@ -283,32 +320,6 @@
       font-size: 12px;
     }
 
-    .preview-wrap {
-      border-top: 1px solid var(--line);
-      padding: 14px 18px 18px;
-      display: grid;
-      gap: 10px;
-      background: #fff;
-    }
-
-    .preview-box {
-      display: grid;
-      place-items: center;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
-      min-height: 220px;
-      padding: 18px;
-    }
-
-    .preview-canvas {
-      width: 200px;
-      height: 200px;
-      border-radius: 14px;
-      border: 1px solid var(--line);
-      background: #fff;
-    }
-
     .empty {
       padding: 20px;
       text-align: center;
@@ -317,6 +328,16 @@
       border: 1px dashed var(--line);
       border-radius: 16px;
       background: #fff;
+    }
+
+    .hint-box {
+      border-top: 1px solid var(--line);
+      padding: 14px 18px 18px;
+      background: #fff;
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
     }
 
     @media (max-width: 1120px) {
@@ -337,8 +358,9 @@
       <div class="panel-header">
         <div>
           <h1>作画エリア</h1>
-          <div class="sub">左で描いて、右でフレームに登録して再生する</div>
+          <div class="sub">ここで描いたものが、そのまま再生画面になる</div>
         </div>
+        <div class="info-chip"><span id="modeLabel">編集中</span></div>
       </div>
 
       <div class="toolbar">
@@ -363,18 +385,32 @@
         </div>
 
         <div class="tool-group">
+          <label class="check-label"><input type="checkbox" id="onionToggle" checked /> オニオンスキン</label>
+        </div>
+
+        <div class="tool-group">
+          <label for="onionOpacity">濃さ</label>
+          <input type="range" id="onionOpacity" min="0" max="80" value="25" />
+          <span id="onionValue">25%</span>
+        </div>
+
+        <div class="tool-group">
           <button id="clearCanvas" class="ghost">キャンバスを消去</button>
+          <button id="importImageBtn" class="ghost">画像を取り込む</button>
+          <input id="importImageInput" type="file" accept="image/*" hidden />
         </div>
       </div>
 
       <div class="canvas-wrap">
         <div class="canvas-shell">
+          <div class="canvas-note" id="canvasNote">フレームを選んで描く</div>
           <canvas id="drawCanvas" width="512" height="512"></canvas>
         </div>
       </div>
 
       <div class="statusbar">
         <span id="toolStatus">現在のツール: ペン</span>
+        <span id="playbackInfo">再生速度: 8 fps</span>
         <span>512 × 512 px</span>
       </div>
     </section>
@@ -383,13 +419,14 @@
       <div class="panel-header">
         <div>
           <h2>フレームと再生</h2>
-          <div class="sub">各コマの表示時間をスライダーで決められる</div>
+          <div class="sub">再生速度は全フレーム共通。別画面プレビューにも同期する</div>
         </div>
       </div>
 
       <div class="controls">
         <div class="frame-actions">
-          <button id="addFrame">現在の絵を追加</button>
+          <button id="addFrame">現在の絵を保存</button>
+          <button id="newBlankFrame" class="ghost">空のフレームを追加</button>
           <button id="updateFrame" class="ghost">選択中のフレームを上書き</button>
           <button id="duplicateFrame" class="ghost">複製</button>
           <button id="deleteFrame" class="danger">削除</button>
@@ -397,15 +434,17 @@
 
         <div class="slider-row">
           <div class="slider-head">
-            <span>選択フレームの表示時間</span>
-            <strong id="durationValue">300 ms</strong>
+            <span>全体の再生速度</span>
+            <strong id="fpsValue">8 fps</strong>
           </div>
-          <input type="range" id="durationSlider" min="50" max="1200" step="10" value="300" />
+          <input type="range" id="fpsSlider" min="1" max="24" step="1" value="8" />
+          <div class="sub" id="frameDurationInfo">1 コマあたり 125 ms</div>
         </div>
 
         <div class="playback-actions">
           <button id="playBtn">再生</button>
           <button id="stopBtn" class="ghost">停止</button>
+          <button id="openPreviewWindowBtn" class="ghost">別画面プレビューを開く</button>
         </div>
 
         <div class="io-actions">
@@ -420,11 +459,10 @@
         <div class="empty">まだフレームがない。左で描いてから「現在の絵を追加」を押す。</div>
       </div>
 
-      <div class="preview-wrap">
-        <div class="sub">プレビュー</div>
-        <div class="preview-box">
-          <canvas id="previewCanvas" class="preview-canvas" width="512" height="512"></canvas>
-        </div>
+      <div class="hint-box">
+        <div>・左のキャンバス自体が再生面。再生すると、その場で動く。</div>
+        <div>・「現在の絵を保存」で現フレームを保存し、「空のフレームを追加」で白紙の新規フレームを作れる。</div>
+        <div>・右のフレーム一覧はドラッグ＆ドロップで並べ替えできる。</div>
       </div>
     </section>
   </div>
@@ -432,8 +470,11 @@
   <script>
     const drawCanvas = document.getElementById('drawCanvas');
     const ctx = drawCanvas.getContext('2d', { willReadFrequently: true });
-    const previewCanvas = document.getElementById('previewCanvas');
-    const previewCtx = previewCanvas.getContext('2d');
+
+    const editorCanvas = document.createElement('canvas');
+    editorCanvas.width = drawCanvas.width;
+    editorCanvas.height = drawCanvas.height;
+    const editorCtx = editorCanvas.getContext('2d', { willReadFrequently: true });
 
     const penTool = document.getElementById('penTool');
     const eraserTool = document.getElementById('eraserTool');
@@ -442,16 +483,28 @@
     const brushSize = document.getElementById('brushSize');
     const brushValue = document.getElementById('brushValue');
     const clearCanvasBtn = document.getElementById('clearCanvas');
+    const importImageBtn = document.getElementById('importImageBtn');
+    const importImageInput = document.getElementById('importImageInput');
     const toolStatus = document.getElementById('toolStatus');
+    const playbackInfo = document.getElementById('playbackInfo');
+    const modeLabel = document.getElementById('modeLabel');
+    const canvasNote = document.getElementById('canvasNote');
+
+    const onionToggle = document.getElementById('onionToggle');
+    const onionOpacity = document.getElementById('onionOpacity');
+    const onionValue = document.getElementById('onionValue');
 
     const addFrameBtn = document.getElementById('addFrame');
+    const newBlankFrameBtn = document.getElementById('newBlankFrame');
     const updateFrameBtn = document.getElementById('updateFrame');
     const duplicateFrameBtn = document.getElementById('duplicateFrame');
     const deleteFrameBtn = document.getElementById('deleteFrame');
-    const durationSlider = document.getElementById('durationSlider');
-    const durationValue = document.getElementById('durationValue');
+    const fpsSlider = document.getElementById('fpsSlider');
+    const fpsValue = document.getElementById('fpsValue');
+    const frameDurationInfo = document.getElementById('frameDurationInfo');
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
+    const openPreviewWindowBtn = document.getElementById('openPreviewWindowBtn');
     const framesContainer = document.getElementById('framesContainer');
     const saveProjectBtn = document.getElementById('saveProject');
     const loadProjectBtn = document.getElementById('loadProjectBtn');
@@ -465,14 +518,158 @@
     let playTimeout = null;
     let isPlaying = false;
     let currentPlaybackIndex = 0;
+    let fps = Number(fpsSlider.value);
+    let previewWindow = null;
+    let draggedFrameIndex = null;
 
-    function initCanvas() {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
-      previewCtx.fillStyle = '#ffffff';
-      previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-      previewCtx.imageSmoothingEnabled = false;
-      ctx.imageSmoothingEnabled = true;
+    function makeFrame(dataURL) {
+      const img = new Image();
+      img.onload = () => {
+        if (isPlaying) {
+          renderPlaybackFrame(currentPlaybackIndex);
+        } else {
+          renderEditor();
+        }
+        syncPreviewWindow();
+      };
+      img.src = dataURL;
+      return { image: dataURL, img };
+    }
+
+    function clearContext(targetCtx, targetCanvas) {
+      targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+      targetCtx.fillStyle = '#ffffff';
+      targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+    }
+
+    function clearEditor() {
+      editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+    }
+
+    function drawFrameObject(frame, targetCtx, alpha = 1) {
+      if (!frame || !frame.img) return;
+      if (!frame.img.complete) return;
+      targetCtx.save();
+      targetCtx.globalAlpha = alpha;
+      targetCtx.drawImage(frame.img, 0, 0, drawCanvas.width, drawCanvas.height);
+      targetCtx.restore();
+    }
+
+    function renderToExternalCanvas(targetCanvas, targetCtx, frame) {
+      if (!targetCanvas || !targetCtx) return;
+      clearContext(targetCtx, targetCanvas);
+      if (frame && frame.img && frame.img.complete) {
+        targetCtx.drawImage(frame.img, 0, 0, targetCanvas.width, targetCanvas.height);
+      }
+    }
+
+    function getPreviewContext() {
+      if (!previewWindow || previewWindow.closed) {
+        previewWindow = null;
+        return null;
+      }
+      const previewCanvas = previewWindow.document.getElementById('previewCanvas');
+      if (!previewCanvas) return null;
+      return {
+        canvas: previewCanvas,
+        ctx: previewCanvas.getContext('2d')
+      };
+    }
+
+    function syncPreviewWindow(frameOverride = null) {
+      const preview = getPreviewContext();
+      if (!preview) return;
+      const frame = frameOverride || getCurrentDisplayFrame();
+      renderToExternalCanvas(preview.canvas, preview.ctx, frame);
+
+      const info = previewWindow.document.getElementById('previewInfo');
+      if (info) {
+        const state = isPlaying ? `再生中 ${fps} fps` : `停止中 ${fps} fps`;
+        info.textContent = state;
+      }
+    }
+
+    function openPreviewWindow() {
+      if (previewWindow && !previewWindow.closed) {
+        previewWindow.focus();
+        syncPreviewWindow();
+        return;
+      }
+
+      previewWindow = window.open('', 'simple-animation-preview', 'width=760,height=820');
+      if (!previewWindow) {
+        alert('別画面を開けなかった。ポップアップを許可してほしい。');
+        return;
+      }
+
+      previewWindow.document.write(`<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>Animation Preview</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f7f9ff 0%, #eef2f9 100%);
+      font-family: Inter, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", sans-serif;
+      color: #1d2433;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .shell {
+      background: #ffffff;
+      border: 1px solid #d8dce7;
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(21, 34, 66, 0.08);
+      width: min(92vw, 720px);
+    }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #667089;
+      flex-wrap: wrap;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      border: 1px solid #d8dce7;
+      background: #fff;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="head">
+      <strong>別画面プレビュー</strong>
+      <span id="previewInfo">停止中</span>
+    </div>
+    <canvas id="previewCanvas" width="512" height="512"></canvas>
+  </div>
+</body>
+</html>`);
+      previewWindow.document.close();
+      previewWindow.addEventListener('beforeunload', () => {
+        previewWindow = null;
+      });
+      syncPreviewWindow();
+    }
+
+    function initCanvases() {
+      clearContext(ctx, drawCanvas);
+      clearEditor();
+      renderEditor();
+      updateFpsUI();
     }
 
     function setTool(nextTool) {
@@ -486,11 +683,22 @@
       toolStatus.textContent = `現在のツール: ${label}`;
     }
 
+    function updateCanvasNote() {
+      if (isPlaying) {
+        canvasNote.textContent = '再生中';
+        return;
+      }
+      if (selectedFrameIndex >= 0) {
+        canvasNote.textContent = `フレーム ${selectedFrameIndex + 1} を編集中`;
+      } else {
+        canvasNote.textContent = '未保存の新規フレームを編集中';
+      }
+    }
+
     function getPointerPosition(event) {
       const rect = drawCanvas.getBoundingClientRect();
       const scaleX = drawCanvas.width / rect.width;
       const scaleY = drawCanvas.height / rect.height;
-
       return {
         x: Math.floor((event.clientX - rect.left) * scaleX),
         y: Math.floor((event.clientY - rect.top) * scaleY)
@@ -498,43 +706,47 @@
     }
 
     function drawDot(x, y) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x, y, Number(brushSize.value) / 2, 0, Math.PI * 2);
+      editorCtx.save();
+      editorCtx.beginPath();
+      editorCtx.arc(x, y, Number(brushSize.value) / 2, 0, Math.PI * 2);
       if (tool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = 'rgba(0,0,0,1)';
+        editorCtx.globalCompositeOperation = 'destination-out';
+        editorCtx.fillStyle = 'rgba(0,0,0,1)';
       } else {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = colorPicker.value;
+        editorCtx.globalCompositeOperation = 'source-over';
+        editorCtx.fillStyle = colorPicker.value;
       }
-      ctx.fill();
-      ctx.restore();
+      editorCtx.fill();
+      editorCtx.restore();
+      renderEditor();
     }
 
     function drawLine(fromX, fromY, toX, toY) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      ctx.lineTo(toX, toY);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.lineWidth = Number(brushSize.value);
+      editorCtx.save();
+      editorCtx.beginPath();
+      editorCtx.moveTo(fromX, fromY);
+      editorCtx.lineTo(toX, toY);
+      editorCtx.lineCap = 'round';
+      editorCtx.lineJoin = 'round';
+      editorCtx.lineWidth = Number(brushSize.value);
       if (tool === 'eraser') {
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.strokeStyle = 'rgba(0,0,0,1)';
+        editorCtx.globalCompositeOperation = 'destination-out';
+        editorCtx.strokeStyle = 'rgba(0,0,0,1)';
       } else {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.strokeStyle = colorPicker.value;
+        editorCtx.globalCompositeOperation = 'source-over';
+        editorCtx.strokeStyle = colorPicker.value;
       }
-      ctx.stroke();
-      ctx.restore();
+      editorCtx.stroke();
+      editorCtx.restore();
+      renderEditor();
     }
 
     function startDrawing(event) {
+      if (isPlaying) return;
       const pos = getPointerPosition(event);
       if (tool === 'fill') {
         floodFill(pos.x, pos.y, hexToRgba(colorPicker.value));
+        renderEditor();
         return;
       }
       drawing = true;
@@ -544,7 +756,7 @@
     }
 
     function moveDrawing(event) {
-      if (!drawing) return;
+      if (!drawing || isPlaying) return;
       const pos = getPointerPosition(event);
       const lastX = Number(drawCanvas.dataset.lastX);
       const lastY = Number(drawCanvas.dataset.lastY);
@@ -560,8 +772,8 @@
     function hexToRgba(hex) {
       const clean = hex.replace('#', '');
       const bigint = parseInt(clean, 16);
-      const r = (bigint >> 16) & 255;
-      const g = (bigint >> 8) & 255;
+      const r = bigint >> 16 & 255;
+      const g = bigint >> 8 & 255;
       const b = bigint & 255;
       return [r, g, b, 255];
     }
@@ -576,7 +788,7 @@
     }
 
     function floodFill(startX, startY, fillColor) {
-      const imageData = ctx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+      const imageData = editorCtx.getImageData(0, 0, editorCanvas.width, editorCanvas.height);
       const data = imageData.data;
       const width = imageData.width;
       const height = imageData.height;
@@ -598,9 +810,10 @@
       }
 
       const stack = [[startX, startY]];
-
       while (stack.length) {
-        const [x, y] = stack.pop();
+        const point = stack.pop();
+        const x = point[0];
+        const y = point[1];
         if (x < 0 || y < 0 || x >= width || y >= height) continue;
         const index = (y * width + x) * 4;
         if (!colorMatch(data, index, targetColor)) continue;
@@ -616,20 +829,28 @@
         stack.push([x, y - 1]);
       }
 
-      ctx.putImageData(imageData, 0, 0);
+      editorCtx.putImageData(imageData, 0, 0);
     }
 
-    function snapshotCanvas() {
-      return drawCanvas.toDataURL('image/png');
+    function snapshotEditorCanvas() {
+      return editorCanvas.toDataURL('image/png');
     }
 
-    function loadImageToCanvas(dataURL, targetCtx, targetCanvas) {
+    function createBlankFrameDataURL() {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = editorCanvas.width;
+      tempCanvas.height = editorCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      clearContext(tempCtx, tempCanvas);
+      return tempCanvas.toDataURL('image/png');
+    }
+
+    function loadDataURLIntoEditor(dataURL) {
       const img = new Image();
       img.onload = () => {
-        targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
-        targetCtx.fillStyle = '#ffffff';
-        targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
-        targetCtx.drawImage(img, 0, 0, targetCanvas.width, targetCanvas.height);
+        clearEditor();
+        editorCtx.drawImage(img, 0, 0, editorCanvas.width, editorCanvas.height);
+        renderEditor();
       };
       img.src = dataURL;
     }
@@ -637,16 +858,36 @@
     function loadFrameIntoEditor(index) {
       if (index < 0 || index >= frames.length) return;
       selectedFrameIndex = index;
-      loadImageToCanvas(frames[index].image, ctx, drawCanvas);
-      durationSlider.value = frames[index].duration;
-      durationValue.textContent = `${frames[index].duration} ms`;
+      loadDataURLIntoEditor(frames[index].image);
       renderFrames();
-      renderPreview(frames[index].image);
+      updateCanvasNote();
+    }
+
+    function getOnionAlpha() {
+      return Number(onionOpacity.value) / 100;
+    }
+
+    function renderEditor() {
+      if (isPlaying) return;
+      clearContext(ctx, drawCanvas);
+
+      if (onionToggle.checked && selectedFrameIndex >= 0) {
+        drawFrameObject(frames[selectedFrameIndex - 1], ctx, getOnionAlpha());
+        drawFrameObject(frames[selectedFrameIndex + 1], ctx, getOnionAlpha() * 0.8);
+      }
+
+      ctx.drawImage(editorCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
+      updateCanvasNote();
+      syncPreviewWindow(getCurrentDisplayFrame());
+    }
+
+    function getCurrentDisplayFrame() {
+      return makeFrame(snapshotEditorCanvas());
     }
 
     function renderFrames() {
       if (!frames.length) {
-        framesContainer.innerHTML = '<div class="empty">まだフレームがない。左で描いてから「現在の絵を追加」を押す。</div>';
+        framesContainer.innerHTML = '<div class="empty">まだフレームがない。左で描いてから保存するか、空のフレームを追加する。</div>';
         return;
       }
 
@@ -654,32 +895,83 @@
       frames.forEach((frame, index) => {
         const card = document.createElement('div');
         card.className = 'frame-card' + (index === selectedFrameIndex ? ' selected' : '');
+        card.draggable = true;
         card.innerHTML = `
           <img class="thumb" src="${frame.image}" alt="frame ${index + 1}" />
           <div class="frame-meta">
             <div class="frame-title">フレーム ${index + 1}</div>
-            <div class="frame-info">表示時間: ${frame.duration} ms</div>
             <div class="frame-info">クリックで選択 / 編集</div>
+            <div class="frame-info">ドラッグで移動 / 共通再生速度: ${fps} fps</div>
           </div>
         `;
+
         card.addEventListener('click', () => loadFrameIntoEditor(index));
+        card.addEventListener('dragstart', event => {
+          draggedFrameIndex = index;
+          card.classList.add('dragging');
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', String(index));
+        });
+        card.addEventListener('dragover', event => {
+          event.preventDefault();
+          card.classList.add('drop-target');
+        });
+        card.addEventListener('dragleave', () => {
+          card.classList.remove('drop-target');
+        });
+        card.addEventListener('drop', event => {
+          event.preventDefault();
+          card.classList.remove('drop-target');
+          const fromIndex = draggedFrameIndex ?? Number(event.dataTransfer.getData('text/plain'));
+          moveFrame(fromIndex, index);
+        });
+        card.addEventListener('dragend', () => {
+          draggedFrameIndex = null;
+          document.querySelectorAll('.frame-card').forEach(node => {
+            node.classList.remove('dragging');
+            node.classList.remove('drop-target');
+          });
+        });
+
         framesContainer.appendChild(card);
       });
     }
 
-    function renderPreview(dataURL) {
-      loadImageToCanvas(dataURL, previewCtx, previewCanvas);
+    function moveFrame(fromIndex, toIndex) {
+      if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+      if (fromIndex >= frames.length || toIndex >= frames.length) return;
+
+      const movedFrame = frames.splice(fromIndex, 1)[0];
+      frames.splice(toIndex, 0, movedFrame);
+
+      if (selectedFrameIndex === fromIndex) {
+        selectedFrameIndex = toIndex;
+      } else if (selectedFrameIndex > fromIndex && selectedFrameIndex <= toIndex) {
+        selectedFrameIndex -= 1;
+      } else if (selectedFrameIndex < fromIndex && selectedFrameIndex >= toIndex) {
+        selectedFrameIndex += 1;
+      }
+
+      renderFrames();
+      if (selectedFrameIndex >= 0 && frames[selectedFrameIndex]) {
+        updateCanvasNote();
+      }
     }
 
     function addFrame() {
-      const frame = {
-        image: snapshotCanvas(),
-        duration: Number(durationSlider.value)
-      };
+      const frame = makeFrame(snapshotEditorCanvas());
       frames.push(frame);
       selectedFrameIndex = frames.length - 1;
       renderFrames();
-      renderPreview(frame.image);
+      renderEditor();
+    }
+
+    function addBlankFrame() {
+      const blankFrame = makeFrame(createBlankFrameDataURL());
+      frames.push(blankFrame);
+      selectedFrameIndex = frames.length - 1;
+      loadFrameIntoEditor(selectedFrameIndex);
+      renderFrames();
     }
 
     function updateFrame() {
@@ -687,12 +979,9 @@
         alert('上書きするフレームを選んでほしい。');
         return;
       }
-      frames[selectedFrameIndex] = {
-        image: snapshotCanvas(),
-        duration: Number(durationSlider.value)
-      };
+      frames[selectedFrameIndex] = makeFrame(snapshotEditorCanvas());
       renderFrames();
-      renderPreview(frames[selectedFrameIndex].image);
+      renderEditor();
     }
 
     function duplicateFrame() {
@@ -701,8 +990,9 @@
         return;
       }
       const original = frames[selectedFrameIndex];
-      frames.splice(selectedFrameIndex + 1, 0, { ...original });
+      frames.splice(selectedFrameIndex + 1, 0, makeFrame(original.image));
       selectedFrameIndex += 1;
+      loadFrameIntoEditor(selectedFrameIndex);
       renderFrames();
     }
 
@@ -714,42 +1004,46 @@
       frames.splice(selectedFrameIndex, 1);
       if (!frames.length) {
         selectedFrameIndex = -1;
-        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-        previewCtx.fillStyle = '#ffffff';
-        previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        clearEditor();
       } else {
         selectedFrameIndex = Math.min(selectedFrameIndex, frames.length - 1);
         loadFrameIntoEditor(selectedFrameIndex);
       }
       renderFrames();
+      renderEditor();
     }
 
-    function updateSelectedFrameDuration(value) {
-      durationValue.textContent = `${value} ms`;
-      if (selectedFrameIndex >= 0 && frames[selectedFrameIndex]) {
-        frames[selectedFrameIndex].duration = Number(value);
-        renderFrames();
-      }
+    function updateFpsUI() {
+      fpsValue.textContent = `${fps} fps`;
+      playbackInfo.textContent = `再生速度: ${fps} fps`;
+      frameDurationInfo.textContent = `1 コマあたり ${Math.round(1000 / fps)} ms`;
+      renderFrames();
+      syncPreviewWindow();
+    }
+
+    function renderPlaybackFrame(index) {
+      if (!frames.length) return;
+      const frame = frames[index];
+      clearContext(ctx, drawCanvas);
+      drawFrameObject(frame, ctx, 1);
+      syncPreviewWindow(frame);
     }
 
     function stopPlayback() {
       isPlaying = false;
       clearTimeout(playTimeout);
-      if (frames[selectedFrameIndex]) {
-        renderPreview(frames[selectedFrameIndex].image);
-      } else if (frames[0]) {
-        renderPreview(frames[0].image);
-      }
+      modeLabel.textContent = '編集中';
+      updateCanvasNote();
+      renderEditor();
     }
 
     function playbackStep() {
       if (!isPlaying || !frames.length) return;
-      const frame = frames[currentPlaybackIndex];
-      renderPreview(frame.image);
+      renderPlaybackFrame(currentPlaybackIndex);
       playTimeout = setTimeout(() => {
         currentPlaybackIndex = (currentPlaybackIndex + 1) % frames.length;
         playbackStep();
-      }, frame.duration);
+      }, Math.round(1000 / fps));
     }
 
     function startPlayback() {
@@ -757,18 +1051,21 @@
         alert('まずフレームを追加してほしい。');
         return;
       }
-      stopPlayback();
+      clearTimeout(playTimeout);
       isPlaying = true;
       currentPlaybackIndex = 0;
+      modeLabel.textContent = '再生中';
+      updateCanvasNote();
       playbackStep();
     }
 
     function saveProject() {
       const payload = {
-        version: 1,
+        version: 2,
         width: drawCanvas.width,
         height: drawCanvas.height,
-        frames
+        fps,
+        frames: frames.map(frame => frame.image)
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -784,16 +1081,17 @@
       reader.onload = () => {
         try {
           const json = JSON.parse(reader.result);
-          if (!Array.isArray(json.frames)) throw new Error('invalid format');
-          frames = json.frames.map(frame => ({
-            image: frame.image,
-            duration: Number(frame.duration) || 300
-          }));
-          selectedFrameIndex = frames.length ? 0 : -1;
+          const frameSources = Array.isArray(json.frames)
+            ? json.frames.map(frame => typeof frame === 'string' ? frame : frame.image).filter(Boolean)
+            : [];
+          if (!frameSources.length) throw new Error('invalid format');
+          frames = frameSources.map(source => makeFrame(source));
+          fps = Number(json.fps) || 8;
+          fpsSlider.value = String(fps);
+          selectedFrameIndex = 0;
+          updateFpsUI();
           renderFrames();
-          if (frames.length) {
-            loadFrameIntoEditor(0);
-          }
+          loadFrameIntoEditor(0);
         } catch (error) {
           alert('JSON の読み込みに失敗した。');
         }
@@ -814,6 +1112,25 @@
       });
     }
 
+    function importImage(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          clearEditor();
+          const scale = Math.min(editorCanvas.width / img.width, editorCanvas.height / img.height);
+          const drawWidth = img.width * scale;
+          const drawHeight = img.height * scale;
+          const offsetX = (editorCanvas.width - drawWidth) / 2;
+          const offsetY = (editorCanvas.height - drawHeight) / 2;
+          editorCtx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+          renderEditor();
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
     penTool.addEventListener('click', () => setTool('pen'));
     eraserTool.addEventListener('click', () => setTool('eraser'));
     fillTool.addEventListener('click', () => setTool('fill'));
@@ -822,10 +1139,23 @@
       brushValue.textContent = brushSize.value;
     });
 
+    onionOpacity.addEventListener('input', () => {
+      onionValue.textContent = `${onionOpacity.value}%`;
+      renderEditor();
+    });
+
+    onionToggle.addEventListener('change', renderEditor);
+
     clearCanvasBtn.addEventListener('click', () => {
-      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+      clearEditor();
+      renderEditor();
+    });
+
+    importImageBtn.addEventListener('click', () => importImageInput.click());
+    importImageInput.addEventListener('change', event => {
+      const file = event.target.files[0];
+      if (file) importImage(file);
+      event.target.value = '';
     });
 
     drawCanvas.addEventListener('pointerdown', startDrawing);
@@ -834,24 +1164,37 @@
     drawCanvas.addEventListener('pointerleave', stopDrawing);
 
     addFrameBtn.addEventListener('click', addFrame);
+    newBlankFrameBtn.addEventListener('click', addBlankFrame);
     updateFrameBtn.addEventListener('click', updateFrame);
     duplicateFrameBtn.addEventListener('click', duplicateFrame);
     deleteFrameBtn.addEventListener('click', deleteFrame);
-    durationSlider.addEventListener('input', (e) => updateSelectedFrameDuration(e.target.value));
+
+    fpsSlider.addEventListener('input', event => {
+      fps = Number(event.target.value);
+      updateFpsUI();
+      if (isPlaying) {
+        startPlayback();
+      }
+    });
+
     playBtn.addEventListener('click', startPlayback);
     stopBtn.addEventListener('click', stopPlayback);
+    openPreviewWindowBtn.addEventListener('click', openPreviewWindow);
 
     saveProjectBtn.addEventListener('click', saveProject);
     loadProjectBtn.addEventListener('click', () => loadProjectInput.click());
-    loadProjectInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+    loadProjectInput.addEventListener('change', event => {
+      const file = event.target.files[0];
       if (file) loadProject(file);
-      e.target.value = '';
+      event.target.value = '';
     });
+
     exportSpritesBtn.addEventListener('click', exportSprites);
 
-    initCanvas();
     setTool('pen');
+    initCanvases();
+    onionValue.textContent = `${onionOpacity.value}%`;
   </script>
 </body>
 </html>
+
