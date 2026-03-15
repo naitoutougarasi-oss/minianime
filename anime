@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Animation Studio</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --line: #d8dce7;
+      --text: #1d2433;
+      --muted: #667089;
+      --accent: #2e6bff;
+      --accent-soft: #eaf0ff;
+      --danger: #d74c4c;
+      --shadow: 0 10px 30px rgba(21, 34, 66, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Hiragino Sans", "Yu Gothic UI", "Yu Gothic", sans-serif;
+      background: linear-gradient(180deg, #fafbff 0%, #f2f4f9 100%);
+      color: var(--text);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: minmax(560px, 1.6fr) minmax(360px, 1fr);
+      gap: 18px;
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+    }
+
+    .panel-header h1,
+    .panel-header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 36px);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcff;
+    }
+
+    .tool-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+    }
+
+    .tool-group label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .tool-buttons {
+      display: inline-flex;
+      gap: 6px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: #bac4da;
+    }
+
+    button.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    button.ghost {
+      background: #f9faff;
+    }
+
+    button.danger {
+      color: var(--danger);
+      border-color: #f0caca;
+      background: #fff7f7;
+    }
+
+    input[type="color"] {
+      width: 38px;
+      height: 38px;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent);
+    }
+
+    .canvas-wrap {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        linear-gradient(45deg, #eef1f8 25%, transparent 25%),
+        linear-gradient(-45deg, #eef1f8 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #eef1f8 75%),
+        linear-gradient(-45deg, transparent 75%, #eef1f8 75%);
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0px;
+    }
+
+    .canvas-shell {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    canvas {
+      display: block;
+      border-radius: 14px;
+      background: white;
+      touch-action: none;
+      image-rendering: pixelated;
+    }
+
+    .statusbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      border-top: 1px solid var(--line);
+      background: #fbfcff;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .right {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 36px);
+    }
+
+    .controls {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 14px;
+    }
+
+    .slider-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .slider-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .frame-actions,
+    .playback-actions,
+    .io-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .frames {
+      flex: 1;
+      overflow: auto;
+      padding: 14px;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+      background: #fcfdff;
+    }
+
+    .frame-card {
+      display: grid;
+      grid-template-columns: 96px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.16s ease;
+    }
+
+    .frame-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(31, 51, 90, 0.07);
+    }
+
+    .frame-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+      background: #fdfefe;
+    }
+
+    .thumb {
+      width: 96px;
+      height: 96px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
+
+    .frame-meta {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .frame-title {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .frame-info {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .preview-wrap {
+      border-top: 1px solid var(--line);
+      padding: 14px 18px 18px;
+      display: grid;
+      gap: 10px;
+      background: #fff;
+    }
+
+    .preview-box {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+      min-height: 220px;
+      padding: 18px;
+    }
+
+    .preview-canvas {
+      width: 200px;
+      height: 200px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .empty {
+      padding: 20px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    @media (max-width: 1120px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .left,
+      .right {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel left">
+      <div class="panel-header">
+        <div>
+          <h1>作画エリア</h1>
+          <div class="sub">左で描いて、右でフレームに登録して再生する</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="tool-group">
+          <label>ツール</label>
+          <div class="tool-buttons">
+            <button id="penTool" class="active">ペン</button>
+            <button id="eraserTool">消しゴム</button>
+            <button id="fillTool">塗りつぶし</button>
+          </div>
+        </div>
+
+        <div class="tool-group">
+          <label for="colorPicker">色</label>
+          <input type="color" id="colorPicker" value="#111111" />
+        </div>
+
+        <div class="tool-group">
+          <label for="brushSize">太さ</label>
+          <input type="range" id="brushSize" min="1" max="40" value="6" />
+          <span id="brushValue">6</span>
+        </div>
+
+        <div class="tool-group">
+          <button id="clearCanvas" class="ghost">キャンバスを消去</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <div class="canvas-shell">
+          <canvas id="drawCanvas" width="512" height="512"></canvas>
+        </div>
+      </div>
+
+      <div class="statusbar">
+        <span id="toolStatus">現在のツール: ペン</span>
+        <span>512 × 512 px</span>
+      </div>
+    </section>
+
+    <section class="panel right">
+      <div class="panel-header">
+        <div>
+          <h2>フレームと再生</h2>
+          <div class="sub">各コマの表示時間をスライダーで決められる</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="frame-actions">
+          <button id="addFrame">現在の絵を追加</button>
+          <button id="updateFrame" class="ghost">選択中のフレームを上書き</button>
+          <button id="duplicateFrame" class="ghost">複製</button>
+          <button id="deleteFrame" class="danger">削除</button>
+        </div>
+
+        <div class="slider-row">
+          <div class="slider-head">
+            <span>選択フレームの表示時間</span>
+            <strong id="durationValue">300 ms</strong>
+          </div>
+          <input type="range" id="durationSlider" min="50" max="1200" step="10" value="300" />
+        </div>
+
+        <div class="playback-actions">
+          <button id="playBtn">再生</button>
+          <button id="stopBtn" class="ghost">停止</button>
+        </div>
+
+        <div class="io-actions">
+          <button id="saveProject" class="ghost">JSON 保存</button>
+          <button id="loadProjectBtn" class="ghost">JSON 読み込み</button>
+          <button id="exportSprites" class="ghost">連番 PNG 書き出し</button>
+          <input id="loadProjectInput" type="file" accept="application/json" hidden />
+        </div>
+      </div>
+
+      <div class="frames" id="framesContainer">
+        <div class="empty">まだフレームがない。左で描いてから「現在の絵を追加」を押す。</div>
+      </div>
+
+      <div class="preview-wrap">
+        <div class="sub">プレビュー</div>
+        <div class="preview-box">
+          <canvas id="previewCanvas" class="preview-canvas" width="512" height="512"></canvas>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const drawCanvas = document.getElementById('drawCanvas');
+    const ctx = drawCanvas.getContext('2d', { willReadFrequently: true });
+    const previewCanvas = document.getElementById('previewCanvas');
+    const previewCtx = previewCanvas.getContext('2d');
+
+    const penTool = document.getElementById('penTool');
+    const eraserTool = document.getElementById('eraserTool');
+    const fillTool = document.getElementById('fillTool');
+    const colorPicker = document.getElementById('colorPicker');
+    const brushSize = document.getElementById('brushSize');
+    const brushValue = document.getElementById('brushValue');
+    const clearCanvasBtn = document.getElementById('clearCanvas');
+    const toolStatus = document.getElementById('toolStatus');
+
+    const addFrameBtn = document.getElementById('addFrame');
+    const updateFrameBtn = document.getElementById('updateFrame');
+    const duplicateFrameBtn = document.getElementById('duplicateFrame');
+    const deleteFrameBtn = document.getElementById('deleteFrame');
+    const durationSlider = document.getElementById('durationSlider');
+    const durationValue = document.getElementById('durationValue');
+    const playBtn = document.getElementById('playBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const framesContainer = document.getElementById('framesContainer');
+    const saveProjectBtn = document.getElementById('saveProject');
+    const loadProjectBtn = document.getElementById('loadProjectBtn');
+    const loadProjectInput = document.getElementById('loadProjectInput');
+    const exportSpritesBtn = document.getElementById('exportSprites');
+
+    let tool = 'pen';
+    let drawing = false;
+    let frames = [];
+    let selectedFrameIndex = -1;
+    let playTimeout = null;
+    let isPlaying = false;
+    let currentPlaybackIndex = 0;
+
+    function initCanvas() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+      previewCtx.fillStyle = '#ffffff';
+      previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+      previewCtx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingEnabled = true;
+    }
+
+    function setTool(nextTool) {
+      tool = nextTool;
+      [penTool, eraserTool, fillTool].forEach(btn => btn.classList.remove('active'));
+      if (tool === 'pen') penTool.classList.add('active');
+      if (tool === 'eraser') eraserTool.classList.add('active');
+      if (tool === 'fill') fillTool.classList.add('active');
+
+      const label = tool === 'pen' ? 'ペン' : tool === 'eraser' ? '消しゴム' : '塗りつぶし';
+      toolStatus.textContent = `現在のツール: ${label}`;
+    }
+
+    function getPointerPosition(event) {
+      const rect = drawCanvas.getBoundingClientRect();
+      const scaleX = drawCanvas.width / rect.width;
+      const scaleY = drawCanvas.height / rect.height;
+
+      return {
+        x: Math.floor((event.clientX - rect.left) * scaleX),
+        y: Math.floor((event.clientY - rect.top) * scaleY)
+      };
+    }
+
+    function drawDot(x, y) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, Number(brushSize.value) / 2, 0, Math.PI * 2);
+      if (tool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.fillStyle = colorPicker.value;
+      }
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawLine(fromX, fromY, toX, toY) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(fromX, fromY);
+      ctx.lineTo(toX, toY);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = Number(brushSize.value);
+      if (tool === 'eraser') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = colorPicker.value;
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function startDrawing(event) {
+      const pos = getPointerPosition(event);
+      if (tool === 'fill') {
+        floodFill(pos.x, pos.y, hexToRgba(colorPicker.value));
+        return;
+      }
+      drawing = true;
+      drawCanvas.dataset.lastX = pos.x;
+      drawCanvas.dataset.lastY = pos.y;
+      drawDot(pos.x, pos.y);
+    }
+
+    function moveDrawing(event) {
+      if (!drawing) return;
+      const pos = getPointerPosition(event);
+      const lastX = Number(drawCanvas.dataset.lastX);
+      const lastY = Number(drawCanvas.dataset.lastY);
+      drawLine(lastX, lastY, pos.x, pos.y);
+      drawCanvas.dataset.lastX = pos.x;
+      drawCanvas.dataset.lastY = pos.y;
+    }
+
+    function stopDrawing() {
+      drawing = false;
+    }
+
+    function hexToRgba(hex) {
+      const clean = hex.replace('#', '');
+      const bigint = parseInt(clean, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return [r, g, b, 255];
+    }
+
+    function colorMatch(data, index, target) {
+      return (
+        data[index] === target[0] &&
+        data[index + 1] === target[1] &&
+        data[index + 2] === target[2] &&
+        data[index + 3] === target[3]
+      );
+    }
+
+    function floodFill(startX, startY, fillColor) {
+      const imageData = ctx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+      const data = imageData.data;
+      const width = imageData.width;
+      const height = imageData.height;
+      const startIndex = (startY * width + startX) * 4;
+      const targetColor = [
+        data[startIndex],
+        data[startIndex + 1],
+        data[startIndex + 2],
+        data[startIndex + 3]
+      ];
+
+      if (
+        targetColor[0] === fillColor[0] &&
+        targetColor[1] === fillColor[1] &&
+        targetColor[2] === fillColor[2] &&
+        targetColor[3] === fillColor[3]
+      ) {
+        return;
+      }
+
+      const stack = [[startX, startY]];
+
+      while (stack.length) {
+        const [x, y] = stack.pop();
+        if (x < 0 || y < 0 || x >= width || y >= height) continue;
+        const index = (y * width + x) * 4;
+        if (!colorMatch(data, index, targetColor)) continue;
+
+        data[index] = fillColor[0];
+        data[index + 1] = fillColor[1];
+        data[index + 2] = fillColor[2];
+        data[index + 3] = fillColor[3];
+
+        stack.push([x + 1, y]);
+        stack.push([x - 1, y]);
+        stack.push([x, y + 1]);
+        stack.push([x, y - 1]);
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function snapshotCanvas() {
+      return drawCanvas.toDataURL('image/png');
+    }
+
+    function loadImageToCanvas(dataURL, targetCtx, targetCanvas) {
+      const img = new Image();
+      img.onload = () => {
+        targetCtx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+        targetCtx.fillStyle = '#ffffff';
+        targetCtx.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+        targetCtx.drawImage(img, 0, 0, targetCanvas.width, targetCanvas.height);
+      };
+      img.src = dataURL;
+    }
+
+    function loadFrameIntoEditor(index) {
+      if (index < 0 || index >= frames.length) return;
+      selectedFrameIndex = index;
+      loadImageToCanvas(frames[index].image, ctx, drawCanvas);
+      durationSlider.value = frames[index].duration;
+      durationValue.textContent = `${frames[index].duration} ms`;
+      renderFrames();
+      renderPreview(frames[index].image);
+    }
+
+    function renderFrames() {
+      if (!frames.length) {
+        framesContainer.innerHTML = '<div class="empty">まだフレームがない。左で描いてから「現在の絵を追加」を押す。</div>';
+        return;
+      }
+
+      framesContainer.innerHTML = '';
+      frames.forEach((frame, index) => {
+        const card = document.createElement('div');
+        card.className = 'frame-card' + (index === selectedFrameIndex ? ' selected' : '');
+        card.innerHTML = `
+          <img class="thumb" src="${frame.image}" alt="frame ${index + 1}" />
+          <div class="frame-meta">
+            <div class="frame-title">フレーム ${index + 1}</div>
+            <div class="frame-info">表示時間: ${frame.duration} ms</div>
+            <div class="frame-info">クリックで選択 / 編集</div>
+          </div>
+        `;
+        card.addEventListener('click', () => loadFrameIntoEditor(index));
+        framesContainer.appendChild(card);
+      });
+    }
+
+    function renderPreview(dataURL) {
+      loadImageToCanvas(dataURL, previewCtx, previewCanvas);
+    }
+
+    function addFrame() {
+      const frame = {
+        image: snapshotCanvas(),
+        duration: Number(durationSlider.value)
+      };
+      frames.push(frame);
+      selectedFrameIndex = frames.length - 1;
+      renderFrames();
+      renderPreview(frame.image);
+    }
+
+    function updateFrame() {
+      if (selectedFrameIndex < 0) {
+        alert('上書きするフレームを選んでほしい。');
+        return;
+      }
+      frames[selectedFrameIndex] = {
+        image: snapshotCanvas(),
+        duration: Number(durationSlider.value)
+      };
+      renderFrames();
+      renderPreview(frames[selectedFrameIndex].image);
+    }
+
+    function duplicateFrame() {
+      if (selectedFrameIndex < 0) {
+        alert('複製するフレームを選んでほしい。');
+        return;
+      }
+      const original = frames[selectedFrameIndex];
+      frames.splice(selectedFrameIndex + 1, 0, { ...original });
+      selectedFrameIndex += 1;
+      renderFrames();
+    }
+
+    function deleteFrame() {
+      if (selectedFrameIndex < 0) {
+        alert('削除するフレームを選んでほしい。');
+        return;
+      }
+      frames.splice(selectedFrameIndex, 1);
+      if (!frames.length) {
+        selectedFrameIndex = -1;
+        previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+        previewCtx.fillStyle = '#ffffff';
+        previewCtx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+      } else {
+        selectedFrameIndex = Math.min(selectedFrameIndex, frames.length - 1);
+        loadFrameIntoEditor(selectedFrameIndex);
+      }
+      renderFrames();
+    }
+
+    function updateSelectedFrameDuration(value) {
+      durationValue.textContent = `${value} ms`;
+      if (selectedFrameIndex >= 0 && frames[selectedFrameIndex]) {
+        frames[selectedFrameIndex].duration = Number(value);
+        renderFrames();
+      }
+    }
+
+    function stopPlayback() {
+      isPlaying = false;
+      clearTimeout(playTimeout);
+      if (frames[selectedFrameIndex]) {
+        renderPreview(frames[selectedFrameIndex].image);
+      } else if (frames[0]) {
+        renderPreview(frames[0].image);
+      }
+    }
+
+    function playbackStep() {
+      if (!isPlaying || !frames.length) return;
+      const frame = frames[currentPlaybackIndex];
+      renderPreview(frame.image);
+      playTimeout = setTimeout(() => {
+        currentPlaybackIndex = (currentPlaybackIndex + 1) % frames.length;
+        playbackStep();
+      }, frame.duration);
+    }
+
+    function startPlayback() {
+      if (!frames.length) {
+        alert('まずフレームを追加してほしい。');
+        return;
+      }
+      stopPlayback();
+      isPlaying = true;
+      currentPlaybackIndex = 0;
+      playbackStep();
+    }
+
+    function saveProject() {
+      const payload = {
+        version: 1,
+        width: drawCanvas.width,
+        height: drawCanvas.height,
+        frames
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'animation-project.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function loadProject(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const json = JSON.parse(reader.result);
+          if (!Array.isArray(json.frames)) throw new Error('invalid format');
+          frames = json.frames.map(frame => ({
+            image: frame.image,
+            duration: Number(frame.duration) || 300
+          }));
+          selectedFrameIndex = frames.length ? 0 : -1;
+          renderFrames();
+          if (frames.length) {
+            loadFrameIntoEditor(0);
+          }
+        } catch (error) {
+          alert('JSON の読み込みに失敗した。');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function exportSprites() {
+      if (!frames.length) {
+        alert('書き出すフレームがない。');
+        return;
+      }
+      frames.forEach((frame, index) => {
+        const link = document.createElement('a');
+        link.href = frame.image;
+        link.download = `frame-${String(index + 1).padStart(3, '0')}.png`;
+        link.click();
+      });
+    }
+
+    penTool.addEventListener('click', () => setTool('pen'));
+    eraserTool.addEventListener('click', () => setTool('eraser'));
+    fillTool.addEventListener('click', () => setTool('fill'));
+
+    brushSize.addEventListener('input', () => {
+      brushValue.textContent = brushSize.value;
+    });
+
+    clearCanvasBtn.addEventListener('click', () => {
+      ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+    });
+
+    drawCanvas.addEventListener('pointerdown', startDrawing);
+    drawCanvas.addEventListener('pointermove', moveDrawing);
+    window.addEventListener('pointerup', stopDrawing);
+    drawCanvas.addEventListener('pointerleave', stopDrawing);
+
+    addFrameBtn.addEventListener('click', addFrame);
+    updateFrameBtn.addEventListener('click', updateFrame);
+    duplicateFrameBtn.addEventListener('click', duplicateFrame);
+    deleteFrameBtn.addEventListener('click', deleteFrame);
+    durationSlider.addEventListener('input', (e) => updateSelectedFrameDuration(e.target.value));
+    playBtn.addEventListener('click', startPlayback);
+    stopBtn.addEventListener('click', stopPlayback);
+
+    saveProjectBtn.addEventListener('click', saveProject);
+    loadProjectBtn.addEventListener('click', () => loadProjectInput.click());
+    loadProjectInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadProject(file);
+      e.target.value = '';
+    });
+    exportSpritesBtn.addEventListener('click', exportSprites);
+
+    initCanvas();
+    setTool('pen');
+  </script>
+</body>
+</html>
