@@ -555,12 +555,10 @@
       targetCtx.restore();
     }
 
-    function renderToExternalCanvas(targetCanvas, targetCtx, frame) {
-      if (!targetCanvas || !targetCtx) return;
+    function renderToExternalCanvas(targetCanvas, targetCtx, sourceCanvas) {
+      if (!targetCanvas || !targetCtx || !sourceCanvas) return;
       clearContext(targetCtx, targetCanvas);
-      if (frame && frame.img && frame.img.complete) {
-        targetCtx.drawImage(frame.img, 0, 0, targetCanvas.width, targetCanvas.height);
-      }
+      targetCtx.drawImage(sourceCanvas, 0, 0, targetCanvas.width, targetCanvas.height);
     }
 
     function getPreviewContext() {
@@ -576,11 +574,10 @@
       };
     }
 
-    function syncPreviewWindow(frameOverride = null) {
+    function syncPreviewWindow() {
       const preview = getPreviewContext();
       if (!preview) return;
-      const frame = frameOverride || getCurrentDisplayFrame();
-      renderToExternalCanvas(preview.canvas, preview.ctx, frame);
+      renderToExternalCanvas(preview.canvas, preview.ctx, drawCanvas);
 
       const info = previewWindow.document.getElementById('previewInfo');
       if (info) {
@@ -840,8 +837,6 @@
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = editorCanvas.width;
       tempCanvas.height = editorCanvas.height;
-      const tempCtx = tempCanvas.getContext('2d');
-      clearContext(tempCtx, tempCanvas);
       return tempCanvas.toDataURL('image/png');
     }
 
@@ -871,18 +866,19 @@
       if (isPlaying) return;
       clearContext(ctx, drawCanvas);
 
+      ctx.drawImage(editorCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
+
       if (onionToggle.checked && selectedFrameIndex >= 0) {
         drawFrameObject(frames[selectedFrameIndex - 1], ctx, getOnionAlpha());
         drawFrameObject(frames[selectedFrameIndex + 1], ctx, getOnionAlpha() * 0.8);
       }
 
-      ctx.drawImage(editorCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
       updateCanvasNote();
-      syncPreviewWindow(getCurrentDisplayFrame());
+      syncPreviewWindow();
     }
 
     function getCurrentDisplayFrame() {
-      return makeFrame(snapshotEditorCanvas());
+      return null;
     }
 
     function renderFrames() {
@@ -1026,7 +1022,7 @@
       const frame = frames[index];
       clearContext(ctx, drawCanvas);
       drawFrameObject(frame, ctx, 1);
-      syncPreviewWindow(frame);
+      syncPreviewWindow();
     }
 
     function stopPlayback() {
@@ -1197,4 +1193,3 @@
   </script>
 </body>
 </html>
-
