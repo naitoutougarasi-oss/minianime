@@ -380,7 +380,7 @@
 
         <div class="tool-group">
           <label for="brushSize">太さ</label>
-          <input type="range" id="brushSize" min="1" max="40" value="6" />
+          <input type="range" id="brushSize" min="1" max="100" value="6" />
           <span id="brushValue">6</span>
         </div>
 
@@ -437,7 +437,7 @@
             <span>全体の再生速度</span>
             <strong id="fpsValue">8 fps</strong>
           </div>
-          <input type="range" id="fpsSlider" min="1" max="24" step="1" value="8" />
+          <input type="range" id="fpsSlider" min="0.5" max="240" step="0.5" value="8" />
           <div class="sub" id="frameDurationInfo">1 コマあたり 125 ms</div>
         </div>
 
@@ -463,6 +463,7 @@
         <div>・左のキャンバス自体が再生面。再生すると、その場で動く。</div>
         <div>・「現在の絵を保存」で現フレームを保存し、「空のフレームを追加」で白紙の新規フレームを作れる。</div>
         <div>・右のフレーム一覧はドラッグ＆ドロップで並べ替えできる。</div>
+        <div>・オニオンスキンは、前フレームを赤、後フレームを青で表示する。</div>
       </div>
     </section>
   </div>
@@ -521,6 +522,9 @@
     let fps = Number(fpsSlider.value);
     let previewWindow = null;
     let draggedFrameIndex = null;
+    let playRafId = null;
+    let playbackLastTimestamp = 0;
+    let playbackAccumulator = 0;
 
     function makeFrame(dataURL) {
       const img = new Image();
@@ -553,6 +557,39 @@
       targetCtx.globalAlpha = alpha;
       targetCtx.drawImage(frame.img, 0, 0, drawCanvas.width, drawCanvas.height);
       targetCtx.restore();
+    }
+
+    function drawOnionFrameObject(frame, targetCtx, rgb, alpha = 0.3) {
+      if (!frame || !frame.img || !frame.img.complete) return;
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = drawCanvas.width;
+      tempCanvas.height = drawCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+      tempCtx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+      tempCtx.drawImage(frame.img, 0, 0, tempCanvas.width, tempCanvas.height);
+
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const pixelAlpha = data[i + 3];
+        if (pixelAlpha === 0) continue;
+
+        const isNearWhite = data[i] > 245 && data[i + 1] > 245 && data[i + 2] > 245;
+        if (isNearWhite) {
+          data[i + 3] = 0;
+          continue;
+        }
+
+        data[i] = rgb[0];
+        data[i + 1] = rgb[1];
+        data[i + 2] = rgb[2];
+        data[i + 3] = Math.max(18, Math.round(pixelAlpha * alpha));
+      }
+
+      tempCtx.putImageData(imageData, 0, 0);
+      targetCtx.drawImage(tempCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
     }
 
     function renderToExternalCanvas(targetCanvas, targetCtx, sourceCanvas) {
@@ -866,12 +903,12 @@
       if (isPlaying) return;
       clearContext(ctx, drawCanvas);
 
-      ctx.drawImage(editorCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
-
       if (onionToggle.checked && selectedFrameIndex >= 0) {
-        drawFrameObject(frames[selectedFrameIndex - 1], ctx, getOnionAlpha());
-        drawFrameObject(frames[selectedFrameIndex + 1], ctx, getOnionAlpha() * 0.8);
+        drawOnionFrameObject(frames[selectedFrameIndex - 1], ctx, [255, 64, 64], getOnionAlpha());
+        drawOnionFrameObject(frames[selectedFrameIndex + 1], ctx, [64, 128, 255], getOnionAlpha());
       }
+
+      ctx.drawImage(editorCanvas, 0, 0, drawCanvas.width, drawCanvas.height);
 
       updateCanvasNote();
       syncPreviewWindow();
@@ -1009,10 +1046,20 @@
       renderEditor();
     }
 
+    function formatFpsValue(value) {
+      return Number.isInteger(value) ? String(value) : value.toFixed(1);
+    }
+
+    function formatFrameDuration(value) {
+      const duration = 1000 / value;
+      return duration >= 10 ? duration.toFixed(1) : duration.toFixed(2);
+    }
+
     function updateFpsUI() {
-      fpsValue.textContent = `${fps} fps`;
-      playbackInfo.textContent = `再生速度: ${fps} fps`;
-      frameDurationInfo.textContent = `1 コマあたり ${Math.round(1000 / fps)} ms`;
+      const fpsText = formatFpsValue(fps);
+      fpsValue.textContent = `${fpsText} fps`;
+      playbackInfo.textContent = `再生速度: ${fpsText} fps`;
+      frameDurationInfo.textContent = `1 コマあたり ${formatFrameDuration(fps)} ms`;
       renderFrames();
       syncPreviewWindow();
     }
@@ -1028,18 +1075,36 @@
     function stopPlayback() {
       isPlaying = false;
       clearTimeout(playTimeout);
+      if (playRafId !== null) {
+        cancelAnimationFrame(playRafId);
+        playRafId = null;
+      }
+      playbackLastTimestamp = 0;
+      playbackAccumulator = 0;
       modeLabel.textContent = '編集中';
       updateCanvasNote();
       renderEditor();
     }
 
-    function playbackStep() {
+    function playbackStep(timestamp) {
       if (!isPlaying || !frames.length) return;
-      renderPlaybackFrame(currentPlaybackIndex);
-      playTimeout = setTimeout(() => {
+
+      if (!playbackLastTimestamp) {
+        playbackLastTimestamp = timestamp;
+      }
+
+      const delta = timestamp - playbackLastTimestamp;
+      playbackLastTimestamp = timestamp;
+      playbackAccumulator += delta;
+
+      const frameInterval = 1000 / fps;
+      while (playbackAccumulator >= frameInterval) {
         currentPlaybackIndex = (currentPlaybackIndex + 1) % frames.length;
-        playbackStep();
-      }, Math.round(1000 / fps));
+        playbackAccumulator -= frameInterval;
+      }
+
+      renderPlaybackFrame(currentPlaybackIndex);
+      playRafId = requestAnimationFrame(playbackStep);
     }
 
     function startPlayback() {
@@ -1047,12 +1112,19 @@
         alert('まずフレームを追加してほしい。');
         return;
       }
+      if (playRafId !== null) {
+        cancelAnimationFrame(playRafId);
+        playRafId = null;
+      }
       clearTimeout(playTimeout);
       isPlaying = true;
       currentPlaybackIndex = 0;
+      playbackLastTimestamp = 0;
+      playbackAccumulator = 0;
       modeLabel.textContent = '再生中';
       updateCanvasNote();
-      playbackStep();
+      renderPlaybackFrame(currentPlaybackIndex);
+      playRafId = requestAnimationFrame(playbackStep);
     }
 
     function saveProject() {
@@ -1169,7 +1241,8 @@
       fps = Number(event.target.value);
       updateFpsUI();
       if (isPlaying) {
-        startPlayback();
+        playbackLastTimestamp = 0;
+        playbackAccumulator = 0;
       }
     });
 
